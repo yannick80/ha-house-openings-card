@@ -1,0 +1,24 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  attach:
+    name: Attach card to release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check version matches tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          grep -q "const VERSION = \"${tag}\";" dist/house-openings-card.js || {
+            echo "VERSION in dist/house-openings-card.js does not match tag ${GITHUB_REF_NAME}"; exit 1; }
+      - name: Upload house-openings-card.js
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/house-openings-card.js --clobber

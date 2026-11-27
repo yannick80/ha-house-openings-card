@@ -1,0 +1,46 @@
+name: Bug report
+description: The card shows something wrong, misses or picks up a sensor, shows an error or does not load.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens, and what did you expect?
+    validations:
+      required: true
+  - type: input
+    id: card_version
+    attributes:
+      label: Card version
+      description: Shown in the browser console (F12) as `house-openings-card x.y.z`.
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser or app
+      placeholder: e.g. Chrome 131, HA Companion app on iOS, Shelly Wall Display
+  - type: textarea
+    id: yaml
+    attributes:
+      label: Card YAML
+      render: yaml
+  - type: textarea
+    id: sensors
+    attributes:
+      label: Affected sensors
+      description: >
+        For a sensor that is missing or wrongly picked up (window, door, gate): its entity ID, area,
+        integration and attributes (Developer tools → States), e.g.
+        `device_class`, `unit_of_measurement`, `friendly_name`.
+      render: yaml
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
