@@ -12,7 +12,7 @@
 (function () {
 "use strict";
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 
 // binary_sensor device classes that count as a window or door
 const CONTACT_CLASSES = ["window", "door", "opening", "garage_door"];
