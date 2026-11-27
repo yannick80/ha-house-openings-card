@@ -24,6 +24,21 @@ const TILTED_RE = /(tilt|gekippt|kipp)/i;
 const OPEN_RE = /^(open|opened|offen|ge(ö|oe)ffnet|on)$/i;
 const CLOSED_RE = /^(closed|geschlossen|zu|off)$/i;
 
+// Doors and lids of appliances: air fryer, oven, dishwasher, fridge, …
+// Matched against entity_id, name, friendly_name, translation_key and the
+// device's name and model.
+const APPLIANCE_RE = new RegExp([
+  "air.?fryer", "hei(ß|ss)luft", "fritteuse", "fryer", "friteuse",
+  "backofen", "oven", "dampfgar", "steam", "mikrowelle", "microwave", "thermomix",
+  "sp(ü|ue)lmaschine", "geschirrsp(ü|ue)ler", "dishwasher",
+  "waschmaschine", "washing.?machine", "washer", "trockner", "dryer",
+  "k(ü|ue)hlschrank", "fridge", "refrigerator", "gefrier", "freezer", "weinklima", "wine.?cooler",
+  "kaffee", "coffee", "espresso",
+].join("|"), "i");
+
+// Integrations whose door sensors belong to appliances
+const APPLIANCE_PLATFORMS = ["miele_lan", "miele", "home_connect", "vesync", "philips_airfryer", "smartthings_appliance"];
+
 const DEFAULTS = { warn_minutes: 30 };
 
 const STRINGS = {
@@ -56,6 +71,7 @@ const STRINGS = {
       exclude_entities: "Kontakte oder Tore ignorieren",
       windows: "Nur diese Kontakte (leer = automatisch)",
       warn_minutes: "Hervorheben, wenn länger offen als (Minuten)",
+      auto_exclude: "Gerätetüren ausblenden (Airfryer, Backofen, …)",
     },
   },
   en: {
@@ -87,6 +103,7 @@ const STRINGS = {
       exclude_entities: "Ignore contacts or gates",
       windows: "Only these contacts (empty = automatic)",
       warn_minutes: "Highlight when open longer than (minutes)",
+      auto_exclude: "Hide appliance doors (air fryer, oven, …)",
     },
   },
 };
@@ -163,6 +180,18 @@ function sinceMs(hass, id) {
 
 // ------------------------------------------------------------ discovery
 
+// Why a contact is an appliance door, or "" if it is a real window or door
+function applianceReason(hass, id, ent) {
+  if (!ent) return "";
+  if (APPLIANCE_PLATFORMS.indexOf(ent.platform) >= 0) return "platform";
+  const dev = ent.device_id && hass.devices ? hass.devices[ent.device_id] : undefined;
+  const text = [id, ent.name, ent.translation_key, attrs(hass, id).friendly_name,
+    dev && dev.name, dev && dev.name_by_user, dev && dev.model]
+    .filter(Boolean)
+    .join(" ");
+  return APPLIANCE_RE.test(text) ? "name" : "";
+}
+
 function areaOfEntity(hass, ent) {
   if (!ent) return undefined;
   if (ent.area_id) return ent.area_id;
@@ -196,7 +225,8 @@ function gateSpecs(hass, config) {
 //  - diagnostic and hidden entities,
 //  - binary sensors of a device that also has a rotary handle sensor (same window twice),
 //  - contacts on a device with a climate entity (thermostat "window open" detection),
-//  - contacts on the device of a shown gate (the gate's own end switch).
+//  - contacts on the device of a shown gate (the gate's own end switch),
+//  - appliance doors (air fryer, oven, dishwasher, …), unless auto_exclude: false.
 function discoverContacts(hass, config, gates) {
   const ents = hass.entities || {};
   const hide = new Set(list(config.exclude_entities));
@@ -219,6 +249,7 @@ function discoverContacts(hass, config, gates) {
       const ent = ents[id];
       if (!ent || hide.has(id) || ent.entity_category || ent.hidden || ent.hidden_by) return false;
       if (!hass.states || !hass.states[id] || !isContact(hass, id)) return false;
+      if (config.auto_exclude !== false && applianceReason(hass, id, ent)) return false;
       const dev = ent.device_id;
       if (dev && (climateDevices.has(dev) || gateDevices.has(dev))) return false;
       if (dev && domainOf(id) === "binary_sensor" && handleDevices.has(dev)) return false;
@@ -673,6 +704,7 @@ class HouseOpeningsCardEditor extends HTMLElement {
       },
       { name: "windows", selector: { entity: { multiple: true, filter: contacts } } },
       { name: "warn_minutes", selector: { number: { min: 0, max: 1440, step: 5, mode: "box", unit_of_measurement: "min" } } },
+      { name: "auto_exclude", selector: { boolean: {} } },
     ];
   }
 
@@ -686,7 +718,7 @@ class HouseOpeningsCardEditor extends HTMLElement {
     }
     this._form.hass = this._hass;
     this._form.schema = this._schema();
-    const data = { warn_minutes: DEFAULTS.warn_minutes, ...this._config };
+    const data = { warn_minutes: DEFAULTS.warn_minutes, auto_exclude: true, ...this._config };
     // The entity picker only knows IDs; names and icons set in YAML are kept in _onFormValue
     if (this._config.gates !== undefined) {
       data.gates = list(this._config.gates).map((g) => (typeof g === "string" ? g : g.entity));
@@ -709,6 +741,7 @@ class HouseOpeningsCardEditor extends HTMLElement {
       if (v === "" || v === undefined || v === null || (Array.isArray(v) && !v.length)) delete config[k];
     }
     if (Number(config.warn_minutes) === DEFAULTS.warn_minutes) delete config.warn_minutes;
+    if (config.auto_exclude === true) delete config.auto_exclude;
     this._config = config;
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config }, bubbles: true, composed: true }));
   }
@@ -738,6 +771,7 @@ if (typeof module !== "undefined" && module && module.exports) {
     HouseOpeningsCard: HouseOpeningsCard,
     HouseOpeningsCardEditor: HouseOpeningsCardEditor,
     analyse: analyse,
+    applianceReason: applianceReason,
     contactState: contactState,
     discoverContacts: discoverContacts,
     duration: duration,

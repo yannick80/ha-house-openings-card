@@ -97,6 +97,7 @@ Skipped on purpose:
 - **Thermostat "window open" detection**: contacts on a device that also has a `climate` entity. These are a thermostat's guess, not a contact.
 - **A gate's own end switch**: contacts on the same device as a shown gate.
 - **The same window twice**: if a device has a rotary handle enum sensor, its binary sensor is left out.
+- **Appliance doors**: air fryer, oven, steam oven, microwave, dishwasher, washing machine, dryer, fridge, freezer, wine cooler and coffee machine. They are recognised by the entity ID, name or translation key and by the device's name or model, and every contact of the integrations `miele_lan`, `miele`, `home_connect`, `vesync` and `philips_airfryer` is skipped. Turn this off with `auto_exclude: false`; anything it misses goes into `exclude_entities`.
 
 **Tilted:** shown for enum sensors in the state *tilted*, and for binary sensors with the attribute `window_state: TILTED` (Homematic IP rotary handle HmIP-SRH).
 
@@ -115,6 +116,7 @@ Skipped on purpose:
 | `exclude_areas` | – | Leave out contacts in these areas |
 | `exclude_entities` | – | Contacts or gates to leave out |
 | `warn_minutes` | `30` | Highlight in orange when open longer; `0` turns it off |
+| `auto_exclude` | `true` | Skip appliance doors (air fryer, oven, dishwasher, …) |
 
 ### Example
 
@@ -135,7 +137,7 @@ warn_minutes: 20
 
 **A window is missing.** Check under **Developer tools** > **States** that its `device_class` is `window`, `door`, `opening` or `garage_door`, that it is not a diagnostic entity, and that its device has no `climate` entity. If it still doesn't show, list your contacts under `windows`.
 
-**Something shows up that isn't a window.** Put it into `exclude_entities`.
+**Something shows up that isn't a window**, e.g. an appliance the filter doesn't know. Put it into `exclude_entities`, and please [open an issue](https://github.com/yannick80/ha-house-openings-card/issues/new/choose) with its entity ID, integration and device name, so the filter can learn it.
 
 **A gate is missing.** Its `device_class` is not `garage` or `gate`. Add it under `gates`, or change the device class under the entity's settings (**Show as**).
 

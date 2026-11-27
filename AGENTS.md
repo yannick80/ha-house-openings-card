@@ -44,6 +44,10 @@ README.md, CHANGELOG.md, LICENSE
   ID patterns. Diagnostic and hidden entities are skipped. Devices with a
   `climate` entity and the device of a shown gate are skipped. Zero config
   must keep working.
+- Appliance doors are skipped by `APPLIANCE_RE` (entity and device name,
+  model) / `APPLIANCE_PLATFORMS`; `auto_exclude: false` turns it off. Each
+  new keyword gets a test in "ordinary windows and doors are not mistaken…"
+  style (no keyword may match a room name like *Waschküche*).
 - Gates: covers with device_class `garage`/`gate`; `current_position` wins
   over the state; unknown/unavailable never counts as open.
 - All logic (`analyse`, `discoverContacts`, `contactState`, `gateState`,
