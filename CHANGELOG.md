@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- Doors and lids of appliances (air fryer, oven, dishwasher, washing
+  machine, dryer, fridge, coffee machine, …) are no longer listed as open
+  doors. They are recognised by name, device name or model and by
+  integration; `auto_exclude: false` turns this off, also in the editor.
+
 ## 0.1.0 - 2026-11-27
 
 ### Added

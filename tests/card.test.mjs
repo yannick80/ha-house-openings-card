@@ -476,7 +476,33 @@ test("editor drops empty and default values, keeps gate names from YAML", () => 
   const ed = new Editor();
   ed.setConfig({ title: "X", gates: [{ entity: "cover.garagentor", name: "Garage" }, "cover.carport"] });
   ed.hass = mkHass([]);
-  ed._onFormValue({ title: "", areas: [], windows: [], warn_minutes: 30, gates: ["cover.garagentor", "cover.neu"] });
+  ed._onFormValue({ title: "", areas: [], windows: [], warn_minutes: 30, auto_exclude: true, gates: ["cover.garagentor", "cover.neu"] });
   const cfg = ed.dispatched.pop().detail.config;
   assert.deepEqual(JSON.parse(JSON.stringify(cfg)), { gates: [{ entity: "cover.garagentor", name: "Garage" }, "cover.neu"] });
+});
+
+// ------------------------------------------------------------ appliances
+
+test("appliance doors (air fryer, oven, dishwasher, …) are not windows or doors", () => {
+  const { analyse } = loadCard().module.exports;
+  const h = mkHass([
+    ["binary_sensor.airfryer_door", "kueche", "on", { device_class: "door", friendly_name: "Airfryer Tür" }, { minutes: 3 }],
+    ["binary_sensor.korb", "kueche", "on", { device_class: "opening", friendly_name: "Korb" }, { device: "fryer" }],
+    ["binary_sensor.dw_door", "kueche", "off", { device_class: "door", friendly_name: "Tür" }, { device: "dw", entity: { platform: "home_connect" } }],
+    ["binary_sensor.oven_door", "kueche", "off", { device_class: "door", friendly_name: "Backofen Tür" }],
+    ["binary_sensor.fridge", "kueche", "off", { device_class: "door", friendly_name: "Kühlschrank" }],
+    ["binary_sensor.wm", "keller", "off", { device_class: "door", friendly_name: "Waschmaschine Tür" }],
+    win("kueche_fenster", "kueche", "on", "Küche Fenster", 10),
+  ]);
+  h.devices.fryer.name = "Philips Air Fryer XXL";
+  assert.deepEqual([...analyse(h, {}, NOW).contacts.map((c) => c.entity)], ["binary_sensor.kueche_fenster"]);
+  assert.equal(analyse(h, { auto_exclude: false }, NOW).contacts.length, 7);
+});
+
+test("ordinary windows and doors are not mistaken for appliances", () => {
+  const { analyse } = loadCard().module.exports;
+  const names = ["Waschküche Fenster", "Küche Fenster", "Haustür", "Terrassentür", "Kellerfenster", "Ofenzimmer Fenster",
+    "Dachfenster Bad", "Kinderzimmer Balkontür", "Garage Seitentür", "Wintergarten Schiebetür"];
+  const h = mkHass(names.map((n, i) => [`binary_sensor.c${i}`, "wohnen", "off", { device_class: i % 2 ? "door" : "window", friendly_name: n }]));
+  assert.equal(analyse(h, {}, NOW).contacts.length, names.length);
 });
