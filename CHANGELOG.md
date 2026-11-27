@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.1.1 - 2026-11-27
+
 ### Fixed
 
 - Doors and lids of appliances (air fryer, oven, dishwasher, washing

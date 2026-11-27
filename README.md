@@ -73,7 +73,7 @@ In HACS, add `https://github.com/yannick80/ha-house-openings-card` as a custom r
 ### Manual installation
 
 1. Download `house-openings-card.js` from the [latest release](https://github.com/yannick80/ha-house-openings-card/releases/latest) to `config/www/`.
-2. Under **Settings** > **Dashboards** > three dots > **Resources**, add `/local/house-openings-card.js?v=0.1.0` as **JavaScript module**.
+2. Under **Settings** > **Dashboards** > three dots > **Resources**, add `/local/house-openings-card.js?v=0.1.1` as **JavaScript module**.
 3. Reload the browser. Raise the `?v=` number after each update.
 <!-- ha-marketplace:exclude-end -->
 
